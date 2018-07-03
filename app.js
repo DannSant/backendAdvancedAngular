@@ -15,9 +15,13 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+//server index config
+var serveIndex = require('serve-index');
+app.use(express.static(__dirname + '/'))
+app.use('/uploads', serveIndex(__dirname + '/uploads'));
+
 //rutas
-app.use(require("./routes/user"));
-app.use(require('./routes/login'));
+app.use(require("./routes/index"));
 
 
 //servidor

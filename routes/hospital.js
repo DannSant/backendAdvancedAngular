@@ -2,11 +2,14 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const _ = require('underscore');
 const app = express();
-const Usuario = require('../models/user')
-const { verificaToken, verificaAdmin } = require('../middlewares/autenticacion')
+const Hospital = require('../models/hospital')
+const { verificaToken } = require('../middlewares/autenticacion')
 
 
-app.get('/user', verificaToken, (req, res) => {
+//=======================
+//Peticiones GET
+//======================
+app.get('/hospital', verificaToken, (req, res) => {
 
     let desde = req.query.desde || 0;
     desde = Number(desde);
@@ -14,10 +17,11 @@ app.get('/user', verificaToken, (req, res) => {
     let limite = req.query.limite || 5;
     limite = Number(limite);
 
-    Usuario.find({ status: true })
+    Hospital.find()
+        .populate('user', 'nombre email')
         .skip(desde)
         .limit(limite)
-        .exec((error, usuarios) => {
+        .exec((error, hospitals) => {
             if (error) {
                 return res.status(400).json({
                     ok: false,
@@ -25,11 +29,11 @@ app.get('/user', verificaToken, (req, res) => {
                 })
             }
 
-            Usuario.count({ status: true }, (e, conteo) => {
+            Hospital.count({}, (e, conteo) => {
                 res.json({
                     ok: true,
                     records: conteo,
-                    data: usuarios
+                    data: hospitals
                 })
             })
 
@@ -39,17 +43,19 @@ app.get('/user', verificaToken, (req, res) => {
         })
 })
 
-app.post('/user', [verificaToken], (req, res) => {
+//=======================
+//Peticiones POST
+//======================
+app.post('/hospital', [verificaToken], (req, res) => {
     let body = req.body;
 
-    let usuario = new Usuario({
+    let hospital = new Hospital({
         nombre: body.nombre,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
-        rol: body.rol
+        img: body.img,
+        user: req.usuario._id
     });
 
-    usuario.save((error, usuarioDB) => {
+    hospital.save((error, hospital) => {
 
         if (error) {
             return res.status(400).json({
@@ -61,19 +67,23 @@ app.post('/user', [verificaToken], (req, res) => {
 
         res.json({
             ok: true,
-            usuario: usuarioDB
+            data: hospital
         })
 
     });
-
 })
 
-app.put('/user/:id', [verificaToken], function(req, res) {
-    let code = req.params.id;
-    let body = _.pick(req.body, ['nombre', 'email', 'img', 'status', 'rol']);
-    //console.log(body);
+//=======================
+//Peticiones PUT
+//======================
 
-    Usuario.findByIdAndUpdate(code, body, { new: true, runValidators: true }, (error, usuarioDB) => {
+app.put('/hospital/:id', [verificaToken], function(req, res) {
+    let code = req.params.id;
+    let body = _.pick(req.body, ['nombre']);
+    body.user = req.usuario._id
+        //console.log(body);
+
+    Hospital.findByIdAndUpdate(code, body, { new: true, runValidators: true }, (error, hospitalDB) => {
         if (error) {
             return res.status(400).json({
                 ok: false,
@@ -81,32 +91,30 @@ app.put('/user/:id', [verificaToken], function(req, res) {
             })
         }
 
-        if (!usuarioDB) {
+        if (!hospitalDB) {
             return res.status(400).json({
                 ok: false,
                 error: {
-                    message: "No se encontró al usuario a actualizar"
+                    message: "No se encontró al hospital a actualizar"
                 }
             })
         }
 
         res.json({
             ok: true,
-            data: usuarioDB
+            data: hospitalDB
         });
 
     });
 })
 
-app.delete('/user/:id', [verificaToken], function(req, res) {
+//=======================
+//Peticiones DELETE
+//======================
+app.delete('/hospital/:id', [verificaToken], function(req, res) {
     let id = req.params.id;
 
-    let body = _.pick(req.body, ['status']);
-
-    body.status = false
-
-
-    Usuario.findByIdAndUpdate(id, body, { new: true }, (error, usuarioDB) => {
+    Hospital.findByIdAndRemove(id, (error, hospitalDB) => {
         if (error) {
             return res.status(400).json({
                 ok: false,
@@ -114,18 +122,18 @@ app.delete('/user/:id', [verificaToken], function(req, res) {
             })
         }
 
-        if (!usuarioDB) {
+        if (!hospitalDB) {
             return res.status(400).json({
                 ok: false,
                 error: {
-                    message: "No se encontró al usuario a borrar"
+                    message: "No se encontró al hospital a borrar"
                 }
             })
         }
 
         res.json({
             ok: true,
-            data: usuarioDB
+            data: hospitalDB
         });
 
     });

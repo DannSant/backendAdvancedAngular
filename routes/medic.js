@@ -1,12 +1,14 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
+
 const _ = require('underscore');
 const app = express();
-const Usuario = require('../models/user')
-const { verificaToken, verificaAdmin } = require('../middlewares/autenticacion')
+const Medic = require('../models/medic')
+const { verificaToken } = require('../middlewares/autenticacion')
 
-
-app.get('/user', verificaToken, (req, res) => {
+//=======================
+//Peticiones GET
+//======================
+app.get('/medic', verificaToken, (req, res) => {
 
     let desde = req.query.desde || 0;
     desde = Number(desde);
@@ -14,10 +16,12 @@ app.get('/user', verificaToken, (req, res) => {
     let limite = req.query.limite || 5;
     limite = Number(limite);
 
-    Usuario.find({ status: true })
+    Medic.find()
+        .populate('user', 'nombre email')
+        .populate('hospital')
         .skip(desde)
         .limit(limite)
-        .exec((error, usuarios) => {
+        .exec((error, hospitals) => {
             if (error) {
                 return res.status(400).json({
                     ok: false,
@@ -25,11 +29,11 @@ app.get('/user', verificaToken, (req, res) => {
                 })
             }
 
-            Usuario.count({ status: true }, (e, conteo) => {
+            Medic.count({}, (e, conteo) => {
                 res.json({
                     ok: true,
                     records: conteo,
-                    data: usuarios
+                    data: hospitals
                 })
             })
 
@@ -37,19 +41,22 @@ app.get('/user', verificaToken, (req, res) => {
 
 
         })
-})
+});
 
-app.post('/user', [verificaToken], (req, res) => {
+//=======================
+//Peticiones POST
+//======================
+app.post('/medic', [verificaToken], (req, res) => {
     let body = req.body;
 
-    let usuario = new Usuario({
+    let medic = new Medic({
         nombre: body.nombre,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
-        rol: body.rol
+        img: body.img,
+        user: req.usuario._id,
+        hospital: body.hospital_id
     });
 
-    usuario.save((error, usuarioDB) => {
+    medic.save((error, medicDB) => {
 
         if (error) {
             return res.status(400).json({
@@ -61,19 +68,23 @@ app.post('/user', [verificaToken], (req, res) => {
 
         res.json({
             ok: true,
-            usuario: usuarioDB
+            data: medicDB
         })
 
     });
-
 })
 
-app.put('/user/:id', [verificaToken], function(req, res) {
+//=======================
+//Peticiones PUT
+//======================
+
+app.put('/medic/:id', [verificaToken], function(req, res) {
     let code = req.params.id;
-    let body = _.pick(req.body, ['nombre', 'email', 'img', 'status', 'rol']);
-    //console.log(body);
+    let body = _.pick(req.body, ['nombre', 'img', 'hospital']);
+    body.user = req.usuario._id
+        //console.log(body);
 
-    Usuario.findByIdAndUpdate(code, body, { new: true, runValidators: true }, (error, usuarioDB) => {
+    Medic.findByIdAndUpdate(code, body, { new: true, runValidators: true }, (error, medicDB) => {
         if (error) {
             return res.status(400).json({
                 ok: false,
@@ -81,54 +92,54 @@ app.put('/user/:id', [verificaToken], function(req, res) {
             })
         }
 
-        if (!usuarioDB) {
+        if (!medicDB) {
             return res.status(400).json({
                 ok: false,
                 error: {
-                    message: "No se encontró al usuario a actualizar"
+                    message: "No se encontró al medic a actualizar"
                 }
             })
         }
 
         res.json({
             ok: true,
-            data: usuarioDB
-        });
-
-    });
-})
-
-app.delete('/user/:id', [verificaToken], function(req, res) {
-    let id = req.params.id;
-
-    let body = _.pick(req.body, ['status']);
-
-    body.status = false
-
-
-    Usuario.findByIdAndUpdate(id, body, { new: true }, (error, usuarioDB) => {
-        if (error) {
-            return res.status(400).json({
-                ok: false,
-                error
-            })
-        }
-
-        if (!usuarioDB) {
-            return res.status(400).json({
-                ok: false,
-                error: {
-                    message: "No se encontró al usuario a borrar"
-                }
-            })
-        }
-
-        res.json({
-            ok: true,
-            data: usuarioDB
+            data: medicDB
         });
 
     });
 });
+
+//=======================
+//Peticiones DELETE
+//======================
+app.delete('/medic/:id', [verificaToken], function(req, res) {
+    let id = req.params.id;
+
+    Medic.findByIdAndRemove(id, (error, medicDB) => {
+        if (error) {
+            return res.status(400).json({
+                ok: false,
+                error
+            })
+        }
+
+        if (!medicDB) {
+            return res.status(400).json({
+                ok: false,
+                error: {
+                    message: "No se encontró al medico a borrar"
+                }
+            })
+        }
+
+        res.json({
+            ok: true,
+            data: medicDB
+        });
+
+    });
+});
+
+
 
 module.exports = app;
