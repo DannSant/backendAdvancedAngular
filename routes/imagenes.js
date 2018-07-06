@@ -8,7 +8,7 @@ const Hospital = require('../models/hospital')
 const User = require('../models/user')
 const { verificaToken, verificaAdmin } = require('../middlewares/autenticacion')
 
-app.get('/img/:tipo/:img', [verificaToken], function(req, res) {
+app.get('/img/:tipo/:img', function(req, res) {
     let tipo = req.params.tipo;
     let img = req.params.img;
 
