@@ -13,7 +13,7 @@ app.get('/medic', verificaToken, (req, res) => {
     let desde = req.query.desde || 0;
     desde = Number(desde);
 
-    let limite = req.query.limite || 5;
+    let limite = req.query.limite || 99;
     limite = Number(limite);
 
     Medic.find()
@@ -21,7 +21,7 @@ app.get('/medic', verificaToken, (req, res) => {
         .populate('hospital')
         .skip(desde)
         .limit(limite)
-        .exec((error, hospitals) => {
+        .exec((error, medics) => {
             if (error) {
                 return res.status(400).json({
                     ok: false,
@@ -33,10 +33,44 @@ app.get('/medic', verificaToken, (req, res) => {
                 res.json({
                     ok: true,
                     records: conteo,
-                    data: hospitals
+                    data: medics
                 })
             })
 
+
+
+
+        })
+});
+
+app.get('/medic/:id', verificaToken, (req, res) => {
+
+    let id = req.params.id;
+
+    Medic.findById(id)
+        .populate('user', 'nombre email img')
+        .populate('hospital')
+        .exec((error, medicDB) => {
+            if (error) {
+                return res.status(400).json({
+                    ok: false,
+                    error
+                })
+            }
+
+            if (!medicDB) {
+                return res.status(400).json({
+                    ok: false,
+                    error: {
+                        msg: "No se encontró medico"
+                    }
+                })
+            }
+
+            res.json({
+                ok: true,
+                data: medicDB
+            })
 
 
 
@@ -53,7 +87,7 @@ app.post('/medic', [verificaToken], (req, res) => {
         nombre: body.nombre,
         img: body.img,
         user: req.usuario._id,
-        hospital: body.hospital_id
+        hospital: body.hospital
     });
 
     medic.save((error, medicDB) => {

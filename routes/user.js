@@ -69,30 +69,50 @@ app.post('/user', (req, res) => {
 })
 
 app.put('/user/:id', [verificaToken], function(req, res) {
-    let code = req.params.id;
-    let body = _.pick(req.body, ['nombre', 'email', 'img', 'status', 'rol']);
-    //console.log(body);
+    var id = req.params.id;
+    var body = req.body;
 
-    Usuario.findByIdAndUpdate(code, body, { new: true, runValidators: true }, (error, usuarioDB) => {
-        if (error) {
-            return res.status(400).json({
+    Usuario.findById(id, (err, usuario) => {
+
+
+        if (err) {
+            return res.status(500).json({
                 ok: false,
-                error
-            })
+                mensaje: 'Error al buscar usuario',
+                errors: err
+            });
         }
 
-        if (!usuarioDB) {
+        if (!usuario) {
             return res.status(400).json({
                 ok: false,
-                error: {
-                    message: "No se encontró al usuario a actualizar"
-                }
-            })
+                mensaje: 'El usuario con el id ' + id + ' no existe',
+                errors: { message: 'No existe un usuario con ese ID' }
+            });
         }
 
-        res.json({
-            ok: true,
-            data: usuarioDB
+
+        usuario.nombre = body.nombre;
+        usuario.email = body.email;
+        usuario.role = body.role;
+
+        usuario.save((err, usuarioGuardado) => {
+
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: 'Error al actualizar usuario',
+                    errors: err
+                });
+            }
+
+            usuarioGuardado.password = ':)';
+
+            res.status(200).json({
+                ok: true,
+                data: usuarioGuardado
+            });
+
         });
 
     });

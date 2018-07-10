@@ -13,7 +13,7 @@ app.use(fileUpload());
 //=======================
 //Peticiones PUT
 //======================
-app.put('/upload/:tipo/:id', verificaToken, (req, res) => {
+app.put('/upload/:tipo/:id', (req, res) => {
 
     let tipo = req.params.tipo;
     let id = req.params.id;
@@ -78,6 +78,7 @@ app.put('/upload/:tipo/:id', verificaToken, (req, res) => {
 });
 
 function subirPorTipo(id, tipo, nombreArchivo, res) {
+
     if (tipo == "usuarios") {
         User.findById(id, (err, usuario) => {
 
@@ -95,14 +96,15 @@ function subirPorTipo(id, tipo, nombreArchivo, res) {
             let pathViejo = "./uploads/usuarios/" + usuario.img;
 
             if (fs.existsSync(pathViejo)) {
-                fs.unlink(pathViejo);
+                fs.unlinkSync(pathViejo);
             }
 
             usuario.img = nombreArchivo;
 
             usuario.save((err, usuarioActualizado) => {
                 usuarioActualizado.password = ".";
-                return res.json({
+
+                return res.status(200).json({
                     ok: true,
                     usuario: usuarioActualizado
                 })
@@ -124,8 +126,8 @@ function subirPorTipo(id, tipo, nombreArchivo, res) {
 
             let pathViejo = "./uploads/medicos/" + medico.img;
 
-            if (fs.existsSync(pathViejo)) {
-                fs.unlink(pathViejo);
+            if (fs.existsSync(pathViejo) && medico.img.length > 0) {
+                fs.unlinkSync(pathViejo);
             }
 
             medico.img = nombreArchivo;
@@ -154,7 +156,7 @@ function subirPorTipo(id, tipo, nombreArchivo, res) {
             let pathViejo = "./uploads/hospitales/" + hospital.img;
 
             if (fs.existsSync(pathViejo)) {
-                fs.unlink(pathViejo);
+                fs.unlinkSync(pathViejo);
             }
 
             hospital.img = nombreArchivo;
