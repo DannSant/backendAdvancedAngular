@@ -42,7 +42,7 @@ app.put('/upload/:tipo/:id', (req, res) => {
     let nombreCortado = archivo.name.split(".");
     let extension = nombreCortado[nombreCortado.length - 1];
 
-    var extensionesValidas = ["jpg", "png", "gif", "jpeg"];
+    var extensionesValidas = ["jpg", "png", "gif", "jpeg","PNG"];
 
     if (extensionesValidas.indexOf(extension) < 0) {
         return res.status(400).json({
