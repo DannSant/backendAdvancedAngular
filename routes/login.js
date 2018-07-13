@@ -64,7 +64,8 @@ app.post('/login/google', async(req, res) => {
                 res.json({
                     ok: true,
                     usuario: usuarioDB,
-                    token
+                    token,
+                    menu: obtenerMenu(usuarioDB.role)
                 });
             }
         } else {
@@ -89,7 +90,8 @@ app.post('/login/google', async(req, res) => {
                 res.json({
                     ok: true,
                     usuario: usuarioGuardado,
-                    token
+                    token,
+                    menu: obtenerMenu(usuarioGuardado.role)
                 });
             })
         }
@@ -136,11 +138,40 @@ app.post('/login', (req, res) => {
         res.json({
             ok: true,
             usuario: usuarioDB,
-            token
+            token,
+            menu: obtenerMenu(usuarioDB.role)
         })
 
 
     });
 });
+
+function obtenerMenu(ROLE){
+    let menu = [
+        {
+          titulo:"Principal",
+          icono:"mdi mdi-gauge",
+          submenu:[
+            {titulo:"Dashboard",url:"/dashboard"},
+            {titulo:"Progress",url:"/progress"},
+            {titulo:"Graficas",url:"/graficas1"},
+            {titulo:"Promesas",url:"/promesas"},
+            {titulo:"RxJs",url:"/rxjs"}
+          ]
+        },
+        {
+          titulo:"Mantenimientos",
+          icono:"mdi mdi-folder-lock-open",
+          submenu:[         
+            {titulo:"Hospitales",url:"/hospitales"},
+            {titulo:"Medicos",url:"/medicos"}
+          ]
+        }];
+   
+    if(ROLE=="ADMIN_ROLE"){
+        menu[1].submenu.unshift(   {titulo:"Usuarios",url:"/usuarios"});
+    }
+    return menu;
+}
 
 module.exports = app;

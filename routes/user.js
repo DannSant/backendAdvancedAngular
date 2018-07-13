@@ -68,7 +68,7 @@ app.post('/user', (req, res) => {
 
 })
 
-app.put('/user/:id', [verificaToken], function(req, res) {
+app.put('/user/:id', [verificaToken,verificaAdmin], function(req, res) {
     var id = req.params.id;
     var body = req.body;
 
@@ -118,7 +118,7 @@ app.put('/user/:id', [verificaToken], function(req, res) {
     });
 })
 
-app.delete('/user/:id', [verificaToken], function(req, res) {
+app.delete('/user/:id', [verificaToken,verificaAdmin], function(req, res) {
     let id = req.params.id;
 
     let body = _.pick(req.body, ['status']);

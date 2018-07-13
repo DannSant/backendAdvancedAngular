@@ -28,8 +28,11 @@ let verificaToken = (req, res, next) => {
 
 let verificaAdmin = (req, res, next) => {
     let role = req.usuario.rol;
+    let id = req.params.id;
 
-    if (role != "ADMIN_ROLE") {
+    if (role == "ADMIN_ROLE" || id == req.usuario._id) {
+        next()
+    }else {
         return res.status(401).json({
             ok: false,
             error: {
@@ -37,11 +40,6 @@ let verificaAdmin = (req, res, next) => {
             }
         })
     }
-    next();
-
-
-
-
 }
 
 
